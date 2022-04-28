@@ -26,7 +26,6 @@ while True:
 
     # imprime a mensagem recebida
     print(str(msg,  encoding='utf-8'))
-    if str(msg,  encoding='utf-8') == 'FileNotFoundError': break
 
 # encerra a conexao
 sock.close() 

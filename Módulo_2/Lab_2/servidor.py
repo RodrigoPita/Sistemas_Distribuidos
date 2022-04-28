@@ -38,7 +38,7 @@ def trataMsg(m):
             s += (i[0] + ': ' + str(i[1]) + '\n')
     except:
         raise FileNotFoundError
-        s = 'FileNotFoundError'
+        return 1
     return s
 
 # cria um socket para comunicacao
@@ -63,7 +63,6 @@ while True:
             novaMsg = trataMsg(aux)
             # envia mensagem de resposta
             novoSock.send(bytes(novaMsg, 'utf-8'))
-            if novaMsg == 'FileNotFoundError': break
 
 # fecha o socket da conexao
 novoSock.close() 
