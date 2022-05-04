@@ -16,7 +16,9 @@ PORT = 5005 # porta de acesso
 entradas = [sys.stdin]
 #armazena historico de conexoes 
 conexoes = {}
+#armazena os clientes na ordem de conexao
 cliIndex = []
+#lista de cores do ANSI
 color_list = [Fore.RED, 
 				Fore.GREEN, 
 				Fore.YELLOW, 
@@ -67,6 +69,7 @@ def atendeRequisicoes(clisock, endr):
 		#recebe dados do cliente
 		data = clisock.recv(1024) 
 		raw_aux = str(data, encoding='utf-8')
+		#verifica se o arquivo de nome raw_aux existe
 		if os.path.exists(raw_aux):
 			new_aux = trataMsg(raw_aux)
 			data = new_aux.encode('utf-8')
