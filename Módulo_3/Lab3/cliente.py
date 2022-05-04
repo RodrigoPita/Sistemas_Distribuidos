@@ -1,31 +1,45 @@
-# cliente
-
+#servidor de echo: lado cliente
 import socket
 
-HOST = 'localhost' # maquina onde esta o par passivo
-PORTA = 5000        # porta que o par passivo esta escutando
+HOST = 'localhost' # maquina onde esta o servidor
+PORT = 5005       # porta que o servidor esta escutando
 
-# cria socket
-sock = socket.socket() # default: socket.AF_INET, socket.SOCK_STREAM 
+def iniciaCliente():
+	'''Cria um socket de cliente e conecta-se ao servidor.
+	Saida: socket criado'''
+	# cria socket
+	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Internet (IPv4 + TCP) 
 
-# conecta-se com o par passivo
-sock.connect((HOST, PORTA)) 
+	# conecta-se com o servidor
+	sock.connect((HOST, PORT)) 
 
-while True:
-    # define a string para envio da mensagem ou codigo de parada
-    aux = input('Digite a mensagem: ')
+	return sock
 
-    # codigo de parada
-    if aux == 'stop': break
-    
-    # envia uma mensagem para o par conectado
-    sock.send(bytes(aux, 'utf-8'))
-    
-    #espera a resposta do par conectado (chamada pode ser BLOQUEANTE)
-    msg = sock.recv(1024) # argumento indica a qtde maxima de bytes da mensagem
+def fazRequisicoes(sock):
+	'''Faz requisicoes ao servidor e exibe o resultado.
+	Entrada: socket conectado ao servidor'''
+	# le as mensagens do usuario ate ele digitar 'fim'
+	while True: 
+		msg = input("Digite uma mensagem ('fim' para terminar):")
+		if msg == 'fim': break 
 
-    # imprime a mensagem recebida
-    print(str(msg,  encoding='utf-8'))
+		# envia a mensagem do usuario para o servidor
+		sock.send(msg.encode('utf-8'))
 
-# encerra a conexao
-sock.close() 
+		#espera a resposta do servidor
+		msg = sock.recv(1024) 
+
+		# imprime a mensagem recebida
+		print(str(msg, encoding='utf-8'))
+
+	# encerra a conexao
+	sock.close()
+
+def main():
+	'''Funcao principal do cliente'''
+	#inicia o cliente
+	sock = iniciaCliente()
+	#interage com o servidor ate encerrar
+	fazRequisicoes(sock)
+
+main()

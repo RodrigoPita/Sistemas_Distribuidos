@@ -1,21 +1,27 @@
 #servidor de echo: lado servidor
 #com finalizacao do lado do servidor
-#com multithreading
+#com multithreading (usa join para esperar as threads terminarem apos digitar 'fim' no servidor)
 import socket
 import select
 import sys
 import threading
+import os
+from colorama import Fore
 
 # define a localizacao do servidor
 HOST = '' # vazio indica que podera receber requisicoes a partir de qq interface de rede da maquina
-PORT = 5000 # porta de acesso
+PORT = 5005 # porta de acesso
 
 #define a lista de I/O de interesse (jah inclui a entrada padrao)
 entradas = [sys.stdin]
-#armazena as conexoes ativas
+#armazena historico de conexoes 
 conexoes = {}
-#lock para acesso do dicionario 'conexoes'
-lock = threading.Lock()
+cliIndex = []
+color_list = [Fore.RED, 
+				Fore.GREEN, 
+				Fore.YELLOW, 
+				Fore.MAGENTA, 
+				Fore.CYAN]
 
 def iniciaServidor():
 	'''Cria um socket de servidor e o coloca em modo de espera por conexoes
@@ -46,9 +52,8 @@ def aceitaConexao(sock):
 	clisock, endr = sock.accept()
 
 	# registra a nova conexao
-	lock.acquire()
 	conexoes[clisock] = endr 
-	lock.release()
+	cliIndex.append(endr)
 
 	return clisock, endr
 
@@ -56,69 +61,59 @@ def atendeRequisicoes(clisock, endr):
 	'''Recebe mensagens e as envia de volta para o cliente (ate o cliente finalizar)
 	Entrada: socket da conexao e endereco do cliente
 	Saida: '''
-
+	cli_color = color_list[cliIndex.index(endr) % len(color_list)]
 	while True:
+		raw_aux, new_aux = '', '' 
 		#recebe dados do cliente
 		data = clisock.recv(1024) 
-		if not data: # dados vazios: cliente encerrou
-			print(str(endr) + '-> encerrou')
-			lock.acquire()
-			del conexoes[clisock] #retira o cliente da lista de conexoes ativas
-			lock.release()
+		raw_aux = str(data, encoding='utf-8')
+		if os.path.exists(raw_aux):
+			new_aux = trataMsg(raw_aux)
+			data = new_aux.encode('utf-8')
+			#clisock.send(bytes(new_aux, 'utf-8'))
+		elif not data: # dados vazios: cliente encerrou
+			print(cli_color + str(endr) + '-> encerrou')
 			clisock.close() # encerra a conexao com o cliente
 			return 
-		print(str(endr) + ': ' + str(data, encoding='utf-8'))
+		else: print(cli_color + str(endr) + ': ' + str(data, encoding='utf-8'))
 		clisock.send(data) # ecoa os dados para o cliente
 
 def trataMsg(m):
-    '''Funcao que recebe uma string m, tenta abrir o arquivo com o nome da string 
-    e retorna uma string s com as 5 palavras de maior frequencia no arquivo'''
-    D = {} # dicionario auxiliar
-    s = '' # string de retorno
-    try:
-        for i in open(m):
-            for j in i.strip() \
-                    .lower() \
-                    .replace(':', '') \
-                    .replace('.', '') \
-                    .replace(',', '') \
-                    .split():
-                if j in D:
-                    D[j] += 1
-                else:
-                    D[j] = 1    
-        D_items = list(D.items()) # lista das tuplas (chave, valor) do dicionario
-        L = [('', 0), ('', 0), ('', 0), ('', 0), ('', 0)]
-        for k in D_items:
-            if k[1] > L[0][1]:
-                L[0] = k
-            elif k[1] > L[1][1]:
-                L[1] = k
-            elif k[1] > L[2][1]:
-                L[2] = k
-            elif k[1] > L[3][1]:
-                L[3] = k
-            elif k[1] > L[4][1]:
-                L[4] = k
-        for i in L:
-            s += (i[0] + ': ' + str(i[1]) + '\n')
-    except:
-        raise FileNotFoundError
-        return 1
-    return s
-
-##while True:
-##        # depois de conectar-se, espera uma mensagem (chamada pode ser BLOQUEANTE))
-##        msg = novoSock.recv(1024) # argumento indica a qtde maxima de dados
-##        if not msg: break 
-##        else:
-##            aux = (str(msg,  encoding='utf-8'))
-##            novaMsg = trataMsg(aux)
-##            # envia mensagem de resposta
-##            novoSock.send(bytes(novaMsg, 'utf-8'))
+	'''Funcao que recebe uma string m, tenta abrir o arquivo com o nome da string 
+	e retorna uma string s com as 5 palavras de maior frequencia no arquivo'''
+	D = {} # dicionario auxiliar
+	s = '' # string de retorno
+	for i in open(m):
+		for j in i.strip() \
+				.lower() \
+				.replace(':', '') \
+				.replace('.', '') \
+				.replace(',', '') \
+				.split():
+			if j in D:
+				D[j] += 1
+			else:
+				D[j] = 1    
+	D_items = list(D.items()) # lista das tuplas (chave, valor) do dicionario
+	L = [('', 0), ('', 0), ('', 0), ('', 0), ('', 0)]
+	for k in D_items:
+		if k[1] > L[0][1]:
+			L[0] = k
+		elif k[1] > L[1][1]:
+			L[1] = k
+		elif k[1] > L[2][1]:
+			L[2] = k
+		elif k[1] > L[3][1]:
+			L[3] = k
+		elif k[1] > L[4][1]:
+			L[4] = k
+	for i in L:
+		s += (i[0] + ': ' + str(i[1]) + '\n')
+	return s
 
 def main():
 	'''Inicializa e implementa o loop principal (infinito) do servidor'''
+	clientes=[] #armazena as threads criadas para fazer join
 	sock = iniciaServidor()
 	print("Pronto para receber conexoes...")
 	while True:
@@ -128,16 +123,19 @@ def main():
 		for pronto in leitura:
 			if pronto == sock:  #pedido novo de conexao
 				clisock, endr = aceitaConexao(sock)
-				print ('Conectado com: ', endr)
+				print (Fore.WHITE + 'Conectado com: ', endr)
 				#cria nova thread para atender o cliente
 				cliente = threading.Thread(target=atendeRequisicoes, args=(clisock,endr))
 				cliente.start()
+				clientes.append(cliente) #armazena a referencia da thread para usar com join()
 			elif pronto == sys.stdin: #entrada padrao
 				cmd = input()
 				if cmd == 'fim': #solicitacao de finalizacao do servidor
-					if not conexoes: #somente termina quando nao houver clientes ativos
-						sock.close()
-						sys.exit()
-					else: print("ha conexoes ativas")
+					for c in clientes: #aguarda todas as threads terminarem
+						c.join()
+					sock.close()
+					sys.exit()
 				elif cmd == 'hist': #outro exemplo de comando para o servidor
 					print(str(conexoes.values()))
+
+main()
