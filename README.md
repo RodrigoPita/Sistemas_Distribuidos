@@ -1,2 +1,4 @@
 # Sistemas_Distribuidos
- UFRJ_BCC_2022.1
+Disciplina de Sistemas Distribuídos
+
+Professora: Sylvana Rossetto
