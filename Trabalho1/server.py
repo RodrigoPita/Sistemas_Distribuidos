@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import select
 import sys
 import threading
@@ -162,3 +163,6 @@ def main():
                     print(str(conexoes.values()))
 
 main()
+=======
+
+>>>>>>> ed193926159d8fc45490c6d5b404957729ed0ead
