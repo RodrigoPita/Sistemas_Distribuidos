@@ -2,16 +2,20 @@
 
 # Cliente de echo usando RPC
 import rpyc #modulo que oferece suporte a abstracao de RPC
+from random import randint 
 
 # endereco do servidor de echo
 SERVIDOR = 'localhost'
 PORTA = 10001
+global identificador
+grafo = { 1: [2, 3], 2: [4], 3: [2, 4] }
 
 def iniciaConexao():
 	'''Conecta-se ao servidor.
 	Saida: retorna a conexao criada.'''
 	conn = rpyc.connect(SERVIDOR, PORTA) 
-	
+	identificador = randint(1, 100)
+	conn.root.exposed_echo( identificador )
 	print(type(conn.root)) # mostra que conn.root eh um stub de cliente
 	print(conn.root.get_service_name()) # exibe o nome da classe (servico) oferecido
 

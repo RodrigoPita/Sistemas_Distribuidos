@@ -9,11 +9,15 @@ from rpyc.utils.server import ForkingServer
 # porta de escuta do servidor de echo
 PORTA = 10001
 
+nodes = []
+
 # classe que implementa o servico de echo
 class Echo(rpyc.Service):
+	node = 1
 	# executa quando uma conexao eh criada
 	def on_connect(self, conn):
-		print("Conexao iniciada:")
+		print("Conexao iniciada com o nó {node}:")
+		node += 1
 
 	# executa quando uma conexao eh fechada
 	def on_disconnect(self, conn):
@@ -21,6 +25,7 @@ class Echo(rpyc.Service):
 
 	# imprime e ecoa a mensagem recebida
 	def exposed_echo(self, msg):
+		if isinstance(msg, int): nodes.append(msg)
 		print(msg)
 		return msg
   
