@@ -1,6 +1,5 @@
-from asyncore import write
+# biblioteca auxiliar
 from random import shuffle
-import sys
 
 # nome do banco de palavras
 file_name = 'words.txt'
@@ -13,8 +12,8 @@ for word in open( file_name ):
     words.append( word.replace( '\n', '' ) )
 
 def chooseWord( list_of_words:list = words ) -> str:
-    '''Escolhe uma palavra aleatoria da lista'''
-    shuffle( list_of_words )
+    '''Sorteia a palavra do jogo'''
+    shuffle( list_of_words ) # embaralha a lista de palavras
     return list_of_words[0]
 
 def displayAttempts( w:str, attempts:list = [], round:int = 6) -> None:
@@ -23,16 +22,17 @@ def displayAttempts( w:str, attempts:list = [], round:int = 6) -> None:
         print( f'{i + 1}:', end = ' ' )
         for l in attempts[i]:
             if ( len( l ) > 1 ):
+                # chama a funcao para alterar a cor da letra l
                 l = colorLetter( l[0], l[1] )
             print( f'{l}', end = '\u001b[37m ' )
-        print()
+        print() # apenas uma quebra de linha
     if ( round < 6 ): print( f'{round+1}: _ _ _ _ _')
 
 def colorLetter( l:str, token:str ) -> str:
     '''Colore a letra l de acordo com o token'''
     pallete = { 'g': '\u001b[32m',
                 'y': '\u001b[33m',
-                'w': '\u001b[37m'}
+                'w': '\u001b[37m'} # dicionario com os codigos de cores no terminal
     new_l = pallete[token] + l[0]
     return new_l
 
@@ -68,12 +68,13 @@ def repetitionAnalize( real_word:str, position_colors:list, repeated_letters:lis
             position_colors.count( position_colors[pos][0] + 'g' ) == repeated_letters.count( position_colors[pos][0] ) ) )
 
 def finalMessage( test:list , w:str , round:int ) -> None:
+    '''Imprime a mensagem final do jogo'''
     if ( test == w ): print( f'\nParabéns, você acertou em {round} tentativas')
     else: print( f'\nA palavra era {w}, mais sorte da próxima vez')
 
 def beginGame():
+    '''Da inicio ao jogo'''
     chosen_word = chooseWord( words )
-    ## print( chosen_word )
     attempts = []
     final_round = 6
     for round in range( 1, 7 ):
@@ -86,7 +87,6 @@ def beginGame():
             displayAttempts( chosen_word, attempts )
             break
         displayAttempts( chosen_word, attempts, round )
-    ## displayAttempts( chosen_word, attempts )
     finalMessage( test, chosen_word, final_round )
 
 def main():
