@@ -7,6 +7,11 @@ file_name = 'words.txt'
 # lista com as palavras
 words = []
 
+# list com todas as letras
+alphabet = [ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 
+            'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 
+            'Z', 'X', 'C', 'V', 'B', 'N' , 'M']
+
 # abrindo o banco de palavras, para popular a lista
 for word in open( file_name ):
     words.append( word.replace( '\n', '' ) )
@@ -33,7 +38,7 @@ def colorLetter( l:str, token:str ) -> str:
     pallete = { 'g': '\u001b[32m',
                 'y': '\u001b[33m',
                 'w': '\u001b[37m'} # dicionario com os codigos de cores no terminal
-    new_l = pallete[token] + l[0]
+    new_l = pallete[token] + l[0] + pallete['w']
     return new_l
 
 def wordAnalize( test_word:str, real_word:str ) -> list:
@@ -72,15 +77,35 @@ def finalMessage( test:list , w:str , round:int ) -> None:
     if ( test == w ): print( f'\nParabéns, você acertou em {round} tentativas')
     else: print( f'\nA palavra era {w}, mais sorte da próxima vez')
 
+def reduceAlphabet( letters:list, used_letters:list ) -> list:
+    '''Retira da lista de letras possiveis
+    as letras testadas que nao fazem parte da palavra'''
+    for l in used_letters:
+        if ( len( l ) > 1 ): 
+            letters[alphabet.index( l[0] )] = colorLetter( l[0], l[1] )
+        if ( l in letters ): letters[letters.index( l )] = ' '
+    return letters
+
+def printAlphabet( letters:list ) -> None:
+    print( f'+---------------------+\n| ', end = '' )
+    for i in range( len( letters ) ):
+        print( f'{letters[i]}', end = ' ' )
+        if ( i == 9 ): print( '|\n| ', end = ' ')
+        if ( i == 18 ): print( ' |\n|  ', end = ' ')
+    print( f'    |\n+---------------------+' )
+
 def beginGame():
     '''Da inicio ao jogo'''
     chosen_word = chooseWord( words )
+    possible_letters = [] + alphabet
     attempts = []
     final_round = 6
     for round in range( 1, 7 ):
+        printAlphabet( possible_letters )
         test = input( f'\nTentativa {round}: ').upper()
         while ( test not in words ): test = input( f'Tentativa {round}: ').upper()
         aux = wordAnalize( test, chosen_word )
+        possible_letters = reduceAlphabet( possible_letters, aux )
         attempts.append( aux )
         if ( test == chosen_word ):
             final_round = round
