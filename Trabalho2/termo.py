@@ -1,5 +1,7 @@
 # Para as cores funcionarem no terminal do Windows, use o codigo abaixo no cmd como admin
 # reg add HKEY_CURRENT_USER\Console /v VirtualTerminalLevel /t REG_DWORD /d 0x00000001 /f
+# link para o banco de palavras abaixo
+# https://github.com/fserb/pt-br
 
 # biblioteca auxiliar
 from random import shuffle
