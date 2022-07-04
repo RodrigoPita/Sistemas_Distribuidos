@@ -5,7 +5,7 @@
 from random import shuffle
 
 # nome do banco de palavras
-file_name = 'words.txt'
+file_name = 'dictionary.txt'
 
 # lista com as palavras
 words = []
