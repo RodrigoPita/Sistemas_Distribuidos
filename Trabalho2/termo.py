@@ -5,12 +5,15 @@
 
 # biblioteca auxiliar
 from random import shuffle
+import io
 
 # nome do banco de palavras
 file_name = 'dictionary.txt'
+file_name_2 = 'display_dict.txt'
 
 # lista com as palavras
 words = []
+words_display = []
 
 # list com todas as letras
 alphabet = [ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 
@@ -21,16 +24,30 @@ alphabet = [ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
 for word in open( file_name ):
     words.append( word.replace( '\n', '' ) )
 
+for word in io.open( file_name_2, mode = 'r', encoding = 'utf-8' ):
+    word = word.strip()
+    words_display.append( word )
+
 def chooseWord( list_of_words:list = words ) -> str:
     '''Sorteia a palavra do jogo'''
-    shuffle( list_of_words ) # embaralha a lista de palavras
-    return list_of_words[0]
+    aux_list = [] + list_of_words
+    shuffle( aux_list ) # embaralha a lista de palavras
+    return aux_list[0]
 
 def displayAttempts( w:str, attempts:list = [], round:int = 6) -> None:
     '''Imprime as tentativas no terminal, colorindo as letras caso necessario'''
     for i in range( len( attempts ) ):
         print( f'{i + 1}:', end = ' ' )
-        for l in attempts[i]:
+        for j in range( len( attempts[i] ) ):
+            l_aux = attempts[i][j]
+            aux_word = ''
+            for k in attempts[i]:
+                aux_word += k[0]
+
+            index = words.index( aux_word )
+            # print( aux_word, index, words_display[index] )
+            l = words_display[index][j]
+            if ( len( l_aux ) > 1 ): l += l_aux[1]
             if ( len( l ) > 1 ):
                 # chama a funcao para alterar a cor da letra l
                 l = colorLetter( l[0], l[1] )
@@ -43,6 +60,14 @@ def colorLetter( l:str, token:str ) -> str:
     pallete = { 'g': '\u001b[92m',
                 'y': '\u001b[93m',
                 'w': '\u001b[37m'} # dicionario com os codigos de cores no terminal
+    new_l = pallete[token] + l[0] + pallete['w']
+    return new_l
+
+def colorLetterBG( l:str, token:str ) -> str:
+    '''Colore a letra l de acordo com o token'''
+    pallete = { 'g': '\u001b[42m',
+                'y': '\u001b[43m',
+                'w': '\u001b[40m'} # dicionario com os codigos de cores no terminal
     new_l = pallete[token] + l[0] + pallete['w']
     return new_l
 
@@ -102,6 +127,8 @@ def printAlphabet( letters:list ) -> None:
 def beginGame():
     '''Da inicio ao jogo'''
     chosen_word = chooseWord( words )
+    index_word = words.index( chosen_word )
+    chosen_word_display = words_display[index_word]
     possible_letters = [] + alphabet
     attempts = []
     final_round = 6
@@ -117,7 +144,7 @@ def beginGame():
             displayAttempts( chosen_word, attempts )
             break
         displayAttempts( chosen_word, attempts, round )
-    finalMessage( test, chosen_word, final_round )
+    finalMessage( test, chosen_word_display, final_round )
 
 def main():
     beginGame()
