@@ -10,10 +10,12 @@ from time import time
 from math import floor
 
 # nome do banco de palavras
-file_name = 'dictionary.txt'
+file_name = 'dictionary_2.txt'
 file_name_2 = 'display_dict.txt'
+file_name_3 = 'dictionary.txt'
 
 # lista com as palavras
+possible_words = []
 words = []
 words_display = []
 
@@ -23,12 +25,16 @@ alphabet = [ 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
             'Z', 'X', 'C', 'V', 'B', 'N' , 'M']
 
 # abrindo o banco de palavras, para popular a lista
+
 for word in open( file_name ):
-    words.append( word.replace( '\n', '' ) )
+    possible_words.append( word.replace( '\n', '' ) )
 
 for word in io.open( file_name_2, mode = 'r', encoding = 'utf-8' ):
     word = word.strip()
     words_display.append( word )
+
+for word in open( file_name_3 ):
+    words.append( word.replace( '\n', '' ) )
 
 def chooseWord( list_of_words:list = words ) -> str:
     '''Sorteia a palavra do jogo'''
@@ -142,7 +148,7 @@ def formatTime( t:float ) -> str:
 
 def beginGame():
     '''Da inicio ao jogo'''
-    chosen_word = chooseWord( words )
+    chosen_word = chooseWord( possible_words )
     index_word = words.index( chosen_word )
     chosen_word_display = words_display[index_word]
     possible_letters = [] + alphabet

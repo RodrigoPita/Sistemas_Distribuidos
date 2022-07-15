@@ -6,10 +6,10 @@ o_string = 'óôòõö'
 u_string = 'úûùü'
 c_string = 'ç'
 
-file_name = 'dicio.txt'
+file_name = 'freq.txt'
 file_name_2 = 'conjug.txt'
-new_file_name = 'display_dict.txt'
-new_file_name_2 = 'dictionary.txt'
+new_file_name = 'display_dict_2.txt'
+new_file_name_2 = 'dictionary_2.txt'
 
 word_list = []
 conjug_list = []
@@ -17,11 +17,15 @@ conjug_list = []
 for word in io.open( file_name_2, mode = 'r', encoding = 'utf-8' ):
     word = word.strip()
     if ( len( word ) != 5 ): continue
-    conjug_list.append( (word+'\n').upper() )
+    conjug_list.append( ( word ).upper() )
 
-for word in io.open( file_name, mode = 'r', encoding = 'utf-8' ):
-    word = word.strip()
-    if ( len( word ) != 5  or word.upper() in conjug_list ): continue
+for line in io.open( file_name, mode = 'r', encoding = 'utf-8' ):
+    line = line.strip()
+    L = line.split( ',' )
+    word = L[0]
+    freq = L[1]
+    freq = int( freq )
+    if ( len( word ) != 5  or word.upper() in conjug_list or freq < 100000 ): continue
     word_list.append( (word+'\n').upper() )
     for i in range( 5 ):
         if ( word[i] in a_string ): word = word[:i] + 'a' + word[i+1:]
