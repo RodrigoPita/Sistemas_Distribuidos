@@ -121,6 +121,7 @@ def reduceAlphabet( letters:list, used_letters:list ) -> list:
     return letters
 
 def printAlphabet( letters:list ) -> None:
+    '''Imprime o teclado de letras possiveis'''
     print( f'+---------------------+\n| ', end = '' )
     for i in range( len( letters ) ):
         print( f'{letters[i]}', end = ' ' )
@@ -129,9 +130,11 @@ def printAlphabet( letters:list ) -> None:
     print( f'    |\n+---------------------+' )
 
 def stopWatch( ti:float, tf:float ) -> float:
+    '''Calcula o tempo total de uma partida'''
     return round( ( tf - ti )/60, 1 )
 
 def formatTime( t:float ) -> str:
+    '''Coloca o tempo no formato minutos:segundos'''
     minutes = floor( t )
     frac = t - minutes
     seconds = round( frac * 60 )
