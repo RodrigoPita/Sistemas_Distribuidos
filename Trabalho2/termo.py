@@ -6,6 +6,8 @@
 # biblioteca auxiliar
 from random import shuffle
 import io
+from time import time
+from math import floor
 
 # nome do banco de palavras
 file_name = 'dictionary.txt'
@@ -102,9 +104,11 @@ def repetitionAnalize( real_word:str, position_colors:list, repeated_letters:lis
             or position_colors.count( position_colors[pos][0] + 'y' ) + 
             position_colors.count( position_colors[pos][0] + 'g' ) == repeated_letters.count( position_colors[pos][0] ) ) )
 
-def finalMessage( test:list , w:str , round:int ) -> None:
+def finalMessage( test:list , w:str , round:int, start_time:float ) -> None:
     '''Imprime a mensagem final do jogo'''
-    if ( test == w ): print( f'\nParabéns, você acertou em {round} tentativas')
+    elapsed_time = stopWatch( start_time, time() )
+    formatted_time = formatTime( elapsed_time )
+    if ( test == w ): print( f'\nParabéns, você acertou em {round} tentativas no período de {formatted_time} minutos')
     else: print( f'\nA palavra era {w}, mais sorte da próxima vez')
 
 def reduceAlphabet( letters:list, used_letters:list ) -> list:
@@ -124,6 +128,15 @@ def printAlphabet( letters:list ) -> None:
         if ( i == 18 ): print( ' |\n|  ', end = ' ')
     print( f'    |\n+---------------------+' )
 
+def stopWatch( ti:float, tf:float ) -> float:
+    return round( ( tf - ti )/60, 1 )
+
+def formatTime( t:float ) -> str:
+    minutes = floor( t )
+    frac = t - minutes
+    seconds = round( frac * 60 )
+    return str( minutes ) + ':' + str( seconds )
+
 def beginGame():
     '''Da inicio ao jogo'''
     chosen_word = chooseWord( words )
@@ -136,6 +149,7 @@ def beginGame():
         printAlphabet( possible_letters )
         test = input( f'\nTentativa {round}: ').upper()
         while ( test not in words ): test = input( f'Tentativa {round}: ').upper()
+        if ( round == 1 ): start = time()
         aux = wordAnalize( test, chosen_word )
         possible_letters = reduceAlphabet( possible_letters, aux )
         attempts.append( aux )
@@ -144,7 +158,7 @@ def beginGame():
             displayAttempts( chosen_word, attempts )
             break
         displayAttempts( chosen_word, attempts, round )
-    finalMessage( test, chosen_word_display, final_round )
+    finalMessage( test, chosen_word_display, final_round, start )
 
 def main():
     beginGame()
