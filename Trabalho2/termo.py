@@ -110,12 +110,12 @@ def repetitionAnalize( real_word:str, position_colors:list, repeated_letters:lis
             or position_colors.count( position_colors[pos][0] + 'y' ) + 
             position_colors.count( position_colors[pos][0] + 'g' ) == repeated_letters.count( position_colors[pos][0] ) ) )
 
-def finalMessage( test:list , w:str , round:int, start_time:float ) -> None:
+def finalMessage( test:list , w:str, w_display:str , round:int, start_time:float ) -> None:
     '''Imprime a mensagem final do jogo'''
     elapsed_time = stopWatch( start_time, time() )
     formatted_time = formatTime( elapsed_time )
     if ( test == w ): print( f'\nParabéns, você acertou em {round} tentativas no período de {formatted_time} minutos')
-    else: print( f'\nA palavra era {w}, mais sorte da próxima vez')
+    else: print( f'\nA palavra era {w_display}, mais sorte da próxima vez')
 
 def reduceAlphabet( letters:list, used_letters:list ) -> list:
     '''Retira da lista de letras possiveis
@@ -167,7 +167,7 @@ def beginGame():
             displayAttempts( chosen_word, attempts )
             break
         displayAttempts( chosen_word, attempts, round )
-    finalMessage( test, chosen_word_display, final_round, start )
+    finalMessage( test, chosen_word ,chosen_word_display, final_round, start )
 
 def main():
     beginGame()
