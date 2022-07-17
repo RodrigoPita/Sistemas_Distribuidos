@@ -1,12 +1,18 @@
 import select
 import sys
 import threading
-
+import termo
 from conexoes import *
+import random
 
 # define a localizacao do servidor
 HOST = ''  # vazio indica que podera receber requisicoes a partir de qq interface de rede da maquina
 PORT = 6004  # porta de acesso
+
+partidas = {}
+partida_id_count = 0
+
+
 
 # define a lista de I/O de interesse (jah inclui a entrada padrao)
 entradas = [sys.stdin]
@@ -29,7 +35,7 @@ LOGIN = "login"
 LOGOFF = "logoff"
 GET_LISTA = "get_lista"
 JOGAR = "jogar"
-PALPITE = "palpite"
+TENTATIVA = "tentativa"
 
 #mensagens
 LOGIN_SUCESSO = "Login com sucesso"
@@ -73,7 +79,7 @@ def aceitaConexao(sock):
     return clisock, endr
 
 
-def atendeRequisicoes(clisock, endr):
+def atendeRequisicoes(clisock, endr, sock):
     """Recebe mensagens e as envia de volta para o cliente (ate o cliente finalizar)
     Entrada: socket da conexao e endereco do cliente"""
 
@@ -100,12 +106,15 @@ def atendeRequisicoes(clisock, endr):
             # retorn lista com usuarios ativos
             get_lista(clisock)
         elif operacao == JOGAR:
+            jogador1 = data['jogador']
+            jogador2 = data['adversario']
+            jogar(jogador1, jogador2, sock)
+
             # TODO: incluir no JSON nome da pessoa a ser convidada,
             # TODO: enviar convite para o convidado, checar se o convidado já está jogando
             # TODO: receber aceitação e iniciar o jogo escolhendo o primeiro jogador, registrar a partida do lado do servidor com um id
             # TODO: enviar JSON "começou", com nome do primeiro jogador e id da partida
-            pass
-        elif operacao == PALPITE:
+        elif operacao == TENTATIVA:
             # TODO: receber no JSON o palpite com o nome do usuário que tentou
             # TODO: processar a tentativa 
             # TODO: retornar a palavra com os caracteres de coloração e com nome do jogar que tentou
@@ -120,7 +129,7 @@ def login(username, endr, porta, clisock):
                     MENSAGEM: LOGIN_INVALIDO}
         enviaMensagem(mensagem, clisock)
     else:
-        usuarios[username] = {ENDERECO_MAI: endr[0], PORTA_MAI: porta}
+        usuarios[username] = {ENDERECO_MAI: endr[0], PORTA_MAI: porta, STATUS: 'disponivel'}
         mensagem = {OPERACAO: LOGIN, STATUS: 200,
                     MENSAGEM: LOGIN_SUCESSO}
         enviaMensagem(mensagem, clisock)
@@ -144,6 +153,84 @@ def logoff(username, clisock):
                     MENSAGEM: LOGOFF_SUCESSO}
         enviaMensagem(mensagem, clisock)
 
+def getEndereco(usuario):
+    usuarios = get_lista()
+    for usr in usuarios:
+        if usr == usuario and usr[STATUS] == 'disponivel':
+            return (usr[ENDERECO_MAI], usr[PORTA_MAI])  
+        else:
+            return None
+
+def enviaPalavra(jogador, sock, palavra, primeiroJogador, idPartida):
+
+
+    msg = {'palavra': palavra, 'primeiroJogador': primeiroJogador, 'status': 200, 'idPartida': idPartida}
+    sock.connect(jogador)
+    enviaMensagem(msg, sock)
+    res = recebeMensagem(sock)
+    return res
+
+def registrarPartida(palavra, jogador1, jogador2):
+    res = partida_id_count
+    partidas[partida_id_count] = {'palavra': palavra, 'jogador1': jogador1, 'jogador2': jogador2, 'tentativas': []}
+    partida_id_count += 1
+    return res
+
+def jogar(jogador1, jogador2, sock):
+
+    jogadores = [jogador1, jogador2]
+    
+    # enviar o convite para o jogador2
+    jogador2_adr = getEndereco(jogador2)
+
+    if jogador2_adr == None:
+        return -1
+
+    jogador1_adr = getEndereco(jogador1)
+
+    sock.connect(jogador2_adr)
+    msg = {'operacao': 'convite'}
+    enviaMensagem(msg, sock)
+    res = recebeMensagem(sock)
+
+    # envia a palavra escolhida para os dois jogadores
+    
+    # escolhe uma palavra para o jogo
+    palavra = termo.chooseWord(termo.playable_words)
+
+    # escolhe o primeiro jogador
+    primeiroJogador = random.randint(0,1)
+
+    partida_id = registrarPartida(palavra, jogador1, jogador2)
+
+    enviaPalavra(jogador1_adr, sock, palavra, jogadores[primeiroJogador], partida_id)
+    enviaPalavra(jogador2_adr, sock, palavra, jogadores[primeiroJogador], partida_id)
+    
+    return partida_id
+
+# tenteiro: jogador que fez o chute
+def processaTentativa(tentativa, partidaId, jogador1, jogador2, sock, tenteiro):
+    palavra = partidas[partidaId]['palavra']
+    res = termo.analyzeWord(tentativa, palavra)
+    partidas[partidaId]['tentativas'].append(res)
+
+    usuario1_adr = getEndereco(jogador1)
+    usuario2_adr = getEndereco(jogador2)
+
+    msg = {'tentativas': res, 'tenteiro': tenteiro}
+
+    sock.connect(usuario1_adr)
+    enviaMensagem(msg, sock)
+
+    sock.connect(usuario2_adr)
+    enviaMensagem(msg, sock)
+
+    
+
+
+
+    
+    
 
 def main():
     """Inicializa e implementa o loop principal (infinito) do servidor"""
@@ -161,7 +248,7 @@ def main():
 
                 # cria nova thread para atender o cliente
                 cliente = threading.Thread(
-                    target=atendeRequisicoes, args=(clisock, endr))
+                    target=atendeRequisicoes, args=(clisock, endr, sock))
 
                 cliente.start()
                 # armazena a referencia da thread para usar com join()
