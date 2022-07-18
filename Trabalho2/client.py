@@ -106,6 +106,8 @@ def iniciarPartida(palavra):
 
 '''
 
+
+
 def iniciarPartida(idPartida, primeiroJogador):
     print("INICIEI A PARTIDA")
     #tentativas = []
@@ -119,13 +121,12 @@ def iniciarPartida(idPartida, primeiroJogador):
     res = recebeMensagem(serverSock)
     
     while res['mensagem'] != 'fim':
-        print(res['tentativas'])
-        print(res['tentativas'][-1])
+        if len(res['tentativas']) >= 2:
+            possible_letters = termo.reduceAlphabet( possible_letters, res['tentativas'][-2] )
         possible_letters = termo.reduceAlphabet( possible_letters, res['tentativas'][-1] )
         termo.displayAttempts(res['tentativas'] )
         termo.printAlphabet( possible_letters )
         tentativa = termo.get_player_guess() 
-        #tentativas.append(tentativa)
         enviarTentativa(tentativa, idPartida)
         res = recebeMensagem(serverSock)
 
