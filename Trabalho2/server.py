@@ -7,7 +7,7 @@ import random
 
 # define a localizacao do servidor
 HOST = ''  # vazio indica que podera receber requisicoes a partir de qq interface de rede da maquina
-PORT = 6004  # porta de acesso
+PORT = 6010  # porta de acesso
 
 partidas = {}
 partida_id_count = 0
@@ -74,55 +74,58 @@ def aceitaConexao(sock):
     clisock, endr = sock.accept()
 
     # registra a nova conexao
-    conexoes[clisock] = endr
+    #conexoes[clisock] = endr
 
     return clisock, endr
 
 
-def atendeRequisicoes(clisock, endr, sock):
+def atendeRequisicoes(clisock):
     """Recebe mensagens e as envia de volta para o cliente (ate o cliente finalizar)
     Entrada: socket da conexao e endereco do cliente"""
+    print("VOU ATENDER A REQUISIÇÃO")
+    
+    # recebe dados do cliente
+    data = recebeMensagem(clisock)
+    print(data)
+    if not data:  # dados vazios: cliente encerrou
+        #print(str(endr) + '-> encerrou')
+        clisock.close()  # encerra a conexao com o cliente
+        return
 
-    while True:
-        # recebe dados do cliente
-        data = recebeMensagem(clisock)
-        print(data)
-        if not data:  # dados vazios: cliente encerrou
-            print(str(endr) + '-> encerrou')
-            clisock.close()  # encerra a conexao com o cliente
-            return
+    operacao = data[OPERACAO]
 
-        operacao = data[OPERACAO]
+    if operacao == LOGIN:
+        #TODO: incluir os status do usuario
+        login(data[USERNAME], data[PORTA_MIN], clisock)
+    elif operacao == LOGOFF:
+        # remove registro do servidor
+        # verifica se a requisição de logoff veio do proprio cliente
+        # if conexoes[clisock] == endr:
+        #     logoff(data[USERNAME], clisock)
+        logoff(data[USERNAME], clisock)
+    elif operacao == GET_LISTA:
+        # retorn lista com usuarios ativos
+        get_lista(clisock)
+    elif operacao == JOGAR:
+        print('recebi uma operacao de jogar')
+        jogador1 = data['jogador']
+        jogador2 = data['adversario']
+        jogar(jogador1, jogador2)
 
-        if operacao == LOGIN:
-            #TODO: incluir os status do usuario
-            login(data[USERNAME], endr, data[PORTA_MIN], clisock)
-        elif operacao == LOGOFF:
-            # remove registro do servidor
-            # verifica se a reqiosocao de logoff veio do proprio cliente
-            if conexoes[clisock] == endr:
-                logoff(data[USERNAME], clisock)
-        elif operacao == GET_LISTA:
-            # retorn lista com usuarios ativos
-            get_lista(clisock)
-        elif operacao == JOGAR:
-            jogador1 = data['jogador']
-            jogador2 = data['adversario']
-            jogar(jogador1, jogador2, sock)
-
-            # TODO: incluir no JSON nome da pessoa a ser convidada,
-            # TODO: enviar convite para o convidado, checar se o convidado já está jogando
-            # TODO: receber aceitação e iniciar o jogo escolhendo o primeiro jogador, registrar a partida do lado do servidor com um id
-            # TODO: enviar JSON "começou", com nome do primeiro jogador e id da partida
-        elif operacao == TENTATIVA:
-            # TODO: receber no JSON o palpite com o nome do usuário que tentou
-            # TODO: processar a tentativa 
-            # TODO: retornar a palavra com os caracteres de coloração e com nome do jogar que tentou
-            # TODO: se a tentiva for correta envia "fim", com nome do ganhador.
-            pass
+        # TODO: incluir no JSON nome da pessoa a ser convidada,
+        # TODO: enviar convite para o convidado, checar se o convidado já está jogando
+        # TODO: receber aceitação e iniciar o jogo escolhendo o primeiro jogador, registrar a partida do lado do servidor com um id
+        # TODO: enviar JSON "começou", com nome do primeiro jogador e id da partida
+    elif operacao == TENTATIVA:
+        processaTentativa(data)
+        # TODO: receber no JSON o palpite com o nome do usuário que tentou
+        # TODO: processar a tentativa 
+        # TODO: retornar a palavra com os caracteres de coloração e com nome do jogar que tentou
+        # TODO: se a tentiva for correta envia "fim", com nome do ganhador.
+        pass
 
 
-def login(username, endr, porta, clisock):
+def login(username, porta, clisock, endr=[0, 1]):
     """Registra o usuario na lista do servidor"""
     if (username in usuarios):
         mensagem = {OPERACAO: LOGIN, STATUS: 400,
@@ -132,6 +135,8 @@ def login(username, endr, porta, clisock):
         usuarios[username] = {ENDERECO_MAI: endr[0], PORTA_MAI: porta, STATUS: 'disponivel'}
         mensagem = {OPERACAO: LOGIN, STATUS: 200,
                     MENSAGEM: LOGIN_SUCESSO}
+        # registra nova conexão
+        conexoes[username] = clisock
         enviaMensagem(mensagem, clisock)
 
 
@@ -149,81 +154,95 @@ def logoff(username, clisock):
         enviaMensagem(mensagem, clisock)
     else:
         del usuarios[username]
+        del conexoes[username]
         mensagem = {OPERACAO: LOGOFF, STATUS: 200,
                     MENSAGEM: LOGOFF_SUCESSO}
         enviaMensagem(mensagem, clisock)
 
 def getEndereco(usuario):
-    usuarios = get_lista()
+    usuarios = get_lista(conexoes[usuario])
     for usr in usuarios:
         if usr == usuario and usr[STATUS] == 'disponivel':
             return (usr[ENDERECO_MAI], usr[PORTA_MAI])  
         else:
             return None
 
-def enviaPalavra(jogador, sock, palavra, primeiroJogador, idPartida):
-
-
-    msg = {'palavra': palavra, 'primeiroJogador': primeiroJogador, 'status': 200, 'idPartida': idPartida}
-    sock.connect(jogador)
+def enviaPalavra(jogador, primeiroJogador, idPartida):
+    msg = {'primeiroJogador': primeiroJogador, 'status': 200, 'idPartida': idPartida}
+    sock = conexoes[jogador]
     enviaMensagem(msg, sock)
-    res = recebeMensagem(sock)
-    return res
 
 def registrarPartida(palavra, jogador1, jogador2):
+    global partida_id_count
     res = partida_id_count
     partidas[partida_id_count] = {'palavra': palavra, 'jogador1': jogador1, 'jogador2': jogador2, 'tentativas': []}
     partida_id_count += 1
     return res
 
-def jogar(jogador1, jogador2, sock):
 
+def jogar(jogador1, jogador2):
+    print('entrei no JOGAR')
     jogadores = [jogador1, jogador2]
+
+    sock_jogador2 = conexoes[jogador2]
+    msg = {'operacao': 'convite', 'jogador1': jogador1}
+    print(f'vou enviar o convite da {jogador1} para o {jogador2}')
+    enviaMensagem(msg, sock_jogador2)
+    print(msg)
+    res = recebeMensagem(sock_jogador2)
+    print(res)
+    if(res[STATUS] == 200):
+        if(res['resposta'] == 'sim'):
+
+            # envia a palavra escolhida para os dois jogadores
     
-    # enviar o convite para o jogador2
-    jogador2_adr = getEndereco(jogador2)
+            # escolhe uma palavra para o jogo
+            palavra = termo.chooseWord(termo.playable_words)
 
-    if jogador2_adr == None:
-        return -1
+            # escolhe o primeiro jogador
+            primeiroJogador = random.randint(0,1)
+            print(f"primeiro jogador: {primeiroJogador}")
+            partida_id = registrarPartida(palavra, jogador1, jogador2)
 
-    jogador1_adr = getEndereco(jogador1)
+            enviaPalavra(jogador1, jogadores[primeiroJogador], partida_id)
+            enviaPalavra(jogador2, jogadores[primeiroJogador], partida_id)
+            
+            return partida_id
+        else:
+            # tratar Não
+            pass
+    else:
+        # tratar erro
+        pass
 
-    sock.connect(jogador2_adr)
-    msg = {'operacao': 'convite'}
-    enviaMensagem(msg, sock)
-    res = recebeMensagem(sock)
 
-    # envia a palavra escolhida para os dois jogadores
-    
-    # escolhe uma palavra para o jogo
-    palavra = termo.chooseWord(termo.playable_words)
-
-    # escolhe o primeiro jogador
-    primeiroJogador = random.randint(0,1)
-
-    partida_id = registrarPartida(palavra, jogador1, jogador2)
-
-    enviaPalavra(jogador1_adr, sock, palavra, jogadores[primeiroJogador], partida_id)
-    enviaPalavra(jogador2_adr, sock, palavra, jogadores[primeiroJogador], partida_id)
-    
-    return partida_id
 
 # tenteiro: jogador que fez o chute
-def processaTentativa(tentativa, partidaId, jogador1, jogador2, sock, tenteiro):
+def processaTentativa(data):
+    tentativa = data['tentativa']
+    partidaId = data['idPartida']
+    tenteiro = data['username']
+    jogador1 = partidas[partidaId]['jogador1']
+    jogador2 = partidas[partidaId]['jogador2']
     palavra = partidas[partidaId]['palavra']
     res = termo.analyzeWord(tentativa, palavra)
     partidas[partidaId]['tentativas'].append(res)
 
-    usuario1_adr = getEndereco(jogador1)
-    usuario2_adr = getEndereco(jogador2)
 
-    msg = {'tentativas': res, 'tenteiro': tenteiro}
+    sock_jogador1 = conexoes[jogador1]
+    sock_jogador2 = conexoes[jogador2]
 
-    sock.connect(usuario1_adr)
-    enviaMensagem(msg, sock)
+    if(tentativa == palavra):
+        msg = {'mensagem': 'fim', 'vencedor': tenteiro}
+        enviaMensagem(msg, sock_jogador1)
+        enviaMensagem(msg, sock_jogador2)
 
-    sock.connect(usuario2_adr)
-    enviaMensagem(msg, sock)
+    msg = {'mensagem': 'continua','tentativas': partidas[partidaId]['tentativas'], 'tenteiro': tenteiro}
+
+    if(tenteiro == jogador2):
+        enviaMensagem(msg, sock_jogador1)
+    else:
+        enviaMensagem(msg, sock_jogador2)
 
     
 
@@ -243,16 +262,17 @@ def main():
         # tratar todas as entradas prontas
         for pronto in leitura:
             if pronto == sock:  # pedido novo de conexao
+                
                 clisock, endr = aceitaConexao(sock)
+                entradas.append(clisock)
                 print('Conectado com: ', endr)
-
                 # cria nova thread para atender o cliente
-                cliente = threading.Thread(
-                    target=atendeRequisicoes, args=(clisock, endr, sock))
+                # cliente = threading.Thread(
+                #     target=atendeRequisicoes, args=(clisock, endr, sock))
 
-                cliente.start()
+                #cliente.start()
                 # armazena a referencia da thread para usar com join()
-                clientes.append(cliente)
+                #clientes.append(cliente)
             elif pronto == sys.stdin:  # entrada padrao
                 cmd = input()
                 if cmd == 'fim':  # solicitacao de finalizacao do servidor
@@ -262,5 +282,7 @@ def main():
                     sys.exit()
                 elif cmd == 'hist':  # outro exemplo de comando para o servidor
                     print(str(conexoes.values()))
+            else:
+                atendeRequisicoes(pronto)
 
 main()

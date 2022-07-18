@@ -44,7 +44,7 @@ def chooseWord( list_of_words:list = words ) -> str:
     shuffle( aux_list ) # embaralha a lista de palavras
     return aux_list[0]
 
-def displayAttempts( w:str, attempts:list = [], round:int = 6) -> None:
+def displayAttempts(attempts:list = [], round:int = 6) -> None:
     '''Imprime as tentativas no terminal, colorindo as letras caso necessario'''
     for i in range( len( attempts ) ):
         print( f'{i + 1}:', end = ' ' )
@@ -63,7 +63,7 @@ def displayAttempts( w:str, attempts:list = [], round:int = 6) -> None:
                 l = colorLetter( l[0], l[1] )
             print( f'{l}', end = '\u001b[37m ' )
         print() # apenas uma quebra de linha
-    if ( round < 6 ): print( f'{round+1}: _ _ _ _ _')
+    #if ( round < 6 ): print( f'{round+1}: _ _ _ _ _')
 
 def colorLetter( l:str, token:str ) -> str:
     '''Colore a letra l de acordo com o token'''
@@ -170,9 +170,14 @@ def get_displayable_format(chosen_word):
     index_word = words.index( chosen_word )
     return words_display[index_word]
 
-def get_player_guess(round):
-    guess = input( f'\nTentativa {round}: ').upper()
-    while ( guess not in words ): guess = input( f'Tentativa {round}: ').upper()
+# def get_player_guess(round):
+#     guess = input( f'\nTentativa {round}: ').upper()
+#     while ( guess not in words ): guess = input( f'Tentativa {round}: ').upper()
+#     return guess
+
+def get_player_guess():
+    guess = input( f'\nTentativa: ').upper()
+    while ( guess not in words ): guess = input( f'Tentativa: ').upper()
     return guess
 
 def process_rounds_guess(chosen_word):
@@ -185,7 +190,7 @@ def process_rounds_guess(chosen_word):
         result = analyzeWord( guess, chosen_word )
         possible_letters = reduceAlphabet( possible_letters, result )
         attempts.append( result )
-        displayAttempts( chosen_word, attempts, round )
+        displayAttempts( attempts, round )
         if ( guess == chosen_word ): break
     return round, start, guess
 
@@ -202,4 +207,3 @@ def main():
     while play_again != 'N':
         beginGame()
         play_again = input( "Quer jogar de novo? ( S/N ): ").upper()
-main()
