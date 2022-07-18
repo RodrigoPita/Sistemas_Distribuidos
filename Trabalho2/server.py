@@ -187,6 +187,9 @@ def jogar(jogador1, jogador2):
     jogadores = [jogador1, jogador2]
 
     sock_jogador2 = conexoes[jogador2]
+    if(usuarios[jogador2][STATUS] == 'jogando'):
+        msg = {'status': 401}
+        enviaMensagem(msg, conexoes[jogador1])
     msg = {'operacao': 'convite', 'jogador1': jogador1}
     print(f'vou enviar o convite da {jogador1} para o {jogador2}')
     enviaMensagem(msg, sock_jogador2)
@@ -195,9 +198,7 @@ def jogar(jogador1, jogador2):
     print(res)
     if(res[STATUS] == 200):
         if(res['resposta'] == 'sim'):
-
-            # envia a palavra escolhida para os dois jogadores
-    
+            
             # escolhe uma palavra para o jogo
             palavra = termo.chooseWord(termo.playable_words)
 
@@ -208,14 +209,14 @@ def jogar(jogador1, jogador2):
 
             enviaPalavra(jogador1, jogadores[primeiroJogador], partida_id)
             enviaPalavra(jogador2, jogadores[primeiroJogador], partida_id)
-            
+            usuarios[jogador1][STATUS] = 'jogando'
+            usuarios[jogador2][STATUS] = 'jogando'
             return partida_id
         else:
             # tratar Não
-            pass
-    else:
-        # tratar erro
-        pass
+            msg = {'status': 400}
+            enviaMensagem(msg, conexoes[jogador1])
+
 
 
 
@@ -233,9 +234,16 @@ def processaTentativa(data):
 
     sock_jogador1 = conexoes[jogador1]
     sock_jogador2 = conexoes[jogador2]
+        
 
     if(tentativa == palavra):
         msg = {'mensagem': 'fim', 'vencedor': tenteiro, 'tentativas': partidas[partidaId]['tentativas']}
+        enviaMensagem(msg, sock_jogador1)
+        enviaMensagem(msg, sock_jogador2)
+        return
+    
+    if(len(partidas[partidaId]['tentativas']) > 5):
+        msg = {'mensagem': 'fim', 'vencedor': 'tenteiro', 'tentativas': partidas[partidaId]['tentativas']}
         enviaMensagem(msg, sock_jogador1)
         enviaMensagem(msg, sock_jogador2)
         return

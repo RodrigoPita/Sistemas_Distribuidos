@@ -33,6 +33,8 @@ def mostrarUsuariosAtivos():
     print(MSG_USUARIOS_ATIVOS)
     print('\n'.join('\t{}: {}'.format(*k) for k in enumerate(usuariosDisponiveis)))
     print('\n')
+    
+    return usuariosDisponiveis
 
 # TODO: escolherAdversario
 def escolherAdversario():
@@ -41,11 +43,11 @@ def escolherAdversario():
 
     global serverSock
 
-    mostrarUsuariosAtivos()
+    usuariosDisponiveis = mostrarUsuariosAtivos()
 
     #verificação para quando não há usuários registrados no servidpr
-    if naoHaUsuariosDisponiveis(usuariosAtivos):
-        return
+    if len(usuariosDisponiveis) == 0:
+        encerra()
 
     usuarioEscolhido = input(MSG_ADVERSARIO)
 
@@ -61,26 +63,29 @@ def escolherAdversario():
     res = recebeMensagem(serverSock)
     if(res['status'] == 200):
         return res['idPartida'], res['primeiroJogador']
+    elif(res['status'] == 401):
+        print('Usuário indisponível')
+        escolherAdversario()
+        
     else:
         # trata erro
-        pass
+        encerra()
 
 def recebeConvite():
-    print('recebi convite')
     res = recebeMensagem(serverSock)
-    print(res)
     jogador = res['jogador1']
-    resposta = input(f'Você recebeu um convite para jogar com o jogador {jogador}, digite "sim" para aceitar e "não" para recusar.')
-    if resposta not in ['sim', 'não']:
-        # resposta não é válida
-        pass
-    else:
-        msg = {'resposta': resposta, 'status': 200}
-        enviaMensagem(msg, serverSock)
+    resposta = input(f'Você recebeu um convite para jogar com o jogador {jogador},\ndigite "sim" para aceitar e "não" para recusar: ')
+    while resposta not in ['sim', 'não']:
+        resposta = input(f'Você recebeu um convite para jogar com o jogador {jogador},\ndigite "sim" para aceitar e "não" para recusar: ')
 
-        server_res = recebeMensagem(serverSock)
-        print(server_res)
-        iniciarPartida(server_res['idPartida'], server_res['primeiroJogador'])
+    msg = {'resposta': resposta, 'status': 200}
+    enviaMensagem(msg, serverSock)
+    
+    if resposta == 'não':
+        encerra()
+        
+    server_res = recebeMensagem(serverSock)
+    iniciarPartida(server_res['idPartida'], server_res['primeiroJogador'])
 
 
 # TODO: digitar Tentativa
@@ -134,6 +139,10 @@ def iniciarPartida(idPartida, primeiroJogador):
     print('Jogo terminou!')
     if res['vencedor'] == usuarioLogado:
         print('Parabéns, você venceu!')
+        
+    elif(res['vencedor'] == 'tenteiro'):
+        print('O jogo chegou ao seu limite de rodadas.')
+        
     else:
         print('VoCê PeRdEu!!!!!')
     
