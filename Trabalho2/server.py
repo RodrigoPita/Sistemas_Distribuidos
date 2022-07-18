@@ -153,11 +153,13 @@ def logoff(username, clisock):
                     MENSAGEM: LOGOFF_ERRO}
         enviaMensagem(mensagem, clisock)
     else:
-        del usuarios[username]
-        del conexoes[username]
+        
         mensagem = {OPERACAO: LOGOFF, STATUS: 200,
                     MENSAGEM: LOGOFF_SUCESSO}
         enviaMensagem(mensagem, clisock)
+        del usuarios[username]
+        del conexoes[username]
+        entradas.remove(clisock)
 
 def getEndereco(usuario):
     usuarios = get_lista(conexoes[usuario])
@@ -233,14 +235,16 @@ def processaTentativa(data):
     sock_jogador2 = conexoes[jogador2]
 
     if(tentativa == palavra):
-        msg = {'mensagem': 'fim', 'vencedor': tenteiro}
+        msg = {'mensagem': 'fim', 'vencedor': tenteiro, 'tentativas': partidas[partidaId]['tentativas']}
         enviaMensagem(msg, sock_jogador1)
         enviaMensagem(msg, sock_jogador2)
+        return
 
     msg = {'mensagem': 'continua','tentativas': partidas[partidaId]['tentativas'], 'tenteiro': tenteiro}
 
     if(tenteiro == jogador2):
         enviaMensagem(msg, sock_jogador1)
+        
     else:
         enviaMensagem(msg, sock_jogador2)
 

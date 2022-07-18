@@ -5,16 +5,10 @@ from menu import *
 from conexoes import *
 from erros import *
 from inputs import *
-import threading
 
 usuarioLogado = ""
 serverSock = None
 usuariosAtivos = {}
-conexoesAtivas = {}
-chatAtivo = False
-conexoes = [sys.stdin]
-mutex = threading.Lock()
-threads = []
 porta = 6005
 STATUS = 'status'
 entradas = [sys.stdin]
@@ -97,21 +91,10 @@ def enviarTentativa(tentativa, idPartida):
     msg_obj = {"operacao": 'tentativa', "username": usuarioLogado, "tentativa": tentativa, 'idPartida': idPartida}
     enviaMensagem(msg_obj, serverSock)
 
-
-
-def process_rounds_guess(chosen_word):
-    attempts = []
-    possible_letters = [] + termo.alphabet
-    for round in range( 1, termo.MAX_ROUNDS+1 ):
-        termo.printAlphabet( possible_letters )
-        guess = termo.get_player_guess(round)
-        if ( round == 1 ): start = termo.time()
-        result = enviarTentativa( guess )
-        possible_letters = termo.reduceAlphabet( possible_letters, result['tentativas'][:-1] )
-        termo.displayAttempts( chosen_word, result['tentativas'], round )
-        if ( guess == chosen_word ): break
-    return round, start, guess
-
+def encerra():
+    logoff(serverSock)
+    serverSock.close()
+    exit(0)
 
 #TODO: iniciarPartida
 '''
@@ -136,7 +119,9 @@ def iniciarPartida(idPartida, primeiroJogador):
     res = recebeMensagem(serverSock)
     
     while res['mensagem'] != 'fim':
-        possible_letters = termo.reduceAlphabet( possible_letters, res['tentativas'][:-1] )
+        print(res['tentativas'])
+        print(res['tentativas'][-1])
+        possible_letters = termo.reduceAlphabet( possible_letters, res['tentativas'][-1] )
         termo.displayAttempts(res['tentativas'] )
         termo.printAlphabet( possible_letters )
         tentativa = termo.get_player_guess() 
@@ -144,8 +129,14 @@ def iniciarPartida(idPartida, primeiroJogador):
         enviarTentativa(tentativa, idPartida)
         res = recebeMensagem(serverSock)
 
+    termo.displayAttempts(res['tentativas'] )
     print('Jogo terminou!')
-    return
+    if res['vencedor'] == usuarioLogado:
+        print('Parabéns, você venceu!')
+    else:
+        print('VoCê PeRdEu!!!!!')
+    
+    encerra()
 
 def main():
     '''Funcao principal do cliente'''
