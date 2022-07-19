@@ -5,7 +5,7 @@ from inputs import *
 ENCODE = "utf-8"
 
 CENTRAL_SERVER = 'localhost'
-CENTRAL_SERVER_PORT = 6010
+CENTRAL_SERVER_PORT = 6013
 
 HOST = ''
 

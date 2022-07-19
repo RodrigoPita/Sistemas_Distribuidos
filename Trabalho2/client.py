@@ -13,7 +13,6 @@ porta = 6005
 STATUS = 'status'
 entradas = [sys.stdin]
 
-# TODO: motrarJogadoresOnline
 def mostrarUsuariosAtivos():
     """Mostra os usuários registrados no servidor central"""
     global usuariosAtivos
@@ -36,7 +35,6 @@ def mostrarUsuariosAtivos():
     
     return usuariosDisponiveis
 
-# TODO: escolherAdversario
 def escolherAdversario():
     """Requisita escolha de destinatário para que o usuário
     inicie ou continue uma conversa"""
@@ -87,8 +85,6 @@ def recebeConvite():
     server_res = recebeMensagem(serverSock)
     iniciarPartida(server_res['idPartida'], server_res['primeiroJogador'])
 
-
-# TODO: digitar Tentativa
 def enviarTentativa(tentativa, idPartida):
     """Recebe a mensagem digitada pelo usuario, envia ao
     destinatario e registra na caixa de entrada"""
@@ -101,30 +97,21 @@ def encerra():
     serverSock.close()
     exit(0)
 
-#TODO: iniciarPartida
-'''
-def iniciarPartida(palavra):
-    # Da inicio ao jogo
-    palavra_display = termo.get_displayable_format(palavra)
-    final_round, start, guess = process_rounds_guess(palavra)
-    termo.finalMessage( guess, palavra ,palavra_display, final_round, start )
-
-'''
-
-
+def displayTentativaAtual( res, tentativa ):
+    tent = termo.analyzeWord( tentativa, res['palavra'])
+    res['tentativas'].append( tent )
+    termo.displayAttempts(res['tentativas'] )
+    res['tentativas'].remove( tent )
+    print( '*************\n')
 
 def iniciarPartida(idPartida, primeiroJogador):
-    print("INICIEI A PARTIDA")
-    #tentativas = []
     possible_letters = [] + termo.alphabet
     if(primeiroJogador == usuarioLogado):  
         termo.printAlphabet( possible_letters )
         tentativa = termo.get_player_guess() 
-        #tentativas.append(tentativa)
         enviarTentativa(tentativa, idPartida)
 
     res = recebeMensagem(serverSock)
-    
     while res['mensagem'] != 'fim':
         if len(res['tentativas']) >= 2:
             possible_letters = termo.reduceAlphabet( possible_letters, res['tentativas'][-2] )
@@ -132,6 +119,7 @@ def iniciarPartida(idPartida, primeiroJogador):
         termo.displayAttempts(res['tentativas'] )
         termo.printAlphabet( possible_letters )
         tentativa = termo.get_player_guess() 
+        displayTentativaAtual( res, tentativa )
         enviarTentativa(tentativa, idPartida)
         res = recebeMensagem(serverSock)
 
@@ -152,9 +140,6 @@ def main():
     '''Funcao principal do cliente'''
     global usuarioLogado, serverSock, entradas
     
-    # inicia o cliente para escutar
-    #sock_cliente, porta = prepararClienteParaEscuta()
-
     while True:
         print('Digite um comando: ')
         r,w,x = select.select(entradas, [], [])

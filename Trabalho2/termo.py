@@ -47,7 +47,8 @@ def chooseWord( list_of_words:list = words ) -> str:
 def displayAttempts(attempts:list = [], round:int = 6) -> None:
     '''Imprime as tentativas no terminal, colorindo as letras caso necessario'''
     for i in range( len( attempts ) ):
-        print( f'{i + 1}:', end = ' ' )
+        if ( i%2 == 0 ): print( f'\u001b[36m{i + 1}:', end = '\u001b[37m ' )
+        else: print( f'\u001b[31m{i + 1}:', end = '\u001b[37m ' )
         for j in range( len( attempts[i] ) ):
             l_aux = attempts[i][j]
             aux_word = ''
