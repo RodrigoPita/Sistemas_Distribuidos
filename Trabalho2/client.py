@@ -124,15 +124,15 @@ def iniciarPartida(idPartida, primeiroJogador):
         res = recebeMensagem(serverSock)
 
     termo.displayAttempts(res['tentativas'] )
-    print('Jogo terminou!')
+    print('\nJogo terminou!')
     if res['vencedor'] == usuarioLogado:
-        print('Parabéns, você venceu!')
+        print('\u001b[32mParabéns, você venceu!\u001b[37m')
         
     elif(res['vencedor'] == 'tenteiro'):
-        print('O jogo chegou ao seu limite de rodadas.')
+        print('\nO jogo chegou ao seu limite de rodadas.')
         
     else:
-        print('VoCê PeRdEu!!!!!')
+        print('\u001b[31mVoCê PeRdEu!!!!!\u001b[37m')
     
     encerra()
 

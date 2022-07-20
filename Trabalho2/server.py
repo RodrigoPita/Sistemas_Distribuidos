@@ -6,7 +6,7 @@ import random
 
 # define a localizacao do servidor
 HOST = ''  # vazio indica que podera receber requisicoes a partir de qq interface de rede da maquina
-PORT = 6013  # porta de acesso
+PORT = 6014  # porta de acesso
 
 partidas = {}
 partida_id_count = 0

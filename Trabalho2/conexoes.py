@@ -4,8 +4,8 @@ from inputs import *
 
 ENCODE = "utf-8"
 
-CENTRAL_SERVER = 'localhost'
-CENTRAL_SERVER_PORT = 6013
+CENTRAL_SERVER = '10.11.0.14'
+CENTRAL_SERVER_PORT = 6014
 
 HOST = ''
 
