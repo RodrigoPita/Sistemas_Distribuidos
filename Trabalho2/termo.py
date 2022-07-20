@@ -68,8 +68,8 @@ def displayAttempts(attempts:list = [], round:int = 6) -> None:
 
 def colorLetter( l:str, token:str ) -> str:
     '''Colore a letra l de acordo com o token'''
-    pallete = { 'g': '\u001b[92m',
-                'y': '\u001b[93m',
+    pallete = { 'g': '\u001b[32m',
+                'y': '\u001b[33m',
                 'w': '\u001b[37m'} # dicionario com os codigos de cores no terminal
     new_l = pallete[token] + l[0] + pallete['w']
     return new_l
